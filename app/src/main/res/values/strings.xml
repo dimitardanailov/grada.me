@@ -17,6 +17,13 @@
     <string name="status_revoke_access_error">Error revoking access: %s</string>
     <string name="signed_in_as">Signed in as %s</string>
 
+    <!-- Dialogs -->
+    <string name="default_alert_dialog_title">Application Error</string>
+    <string name="default_alert_dialog_description">Please try again.</string>
+    <string name="default_alert_dialog_positive_button">Ok</string>
+    <string name="default_alert_dialog_negative_button">Cancel</string>
+    <!-- Dialogs -->
+    
     <!-- Used if there was an error loading the signed in user's name. -->
     <string name="unknown_person">Unknown</string>
     <string name="play_services_error">Google Play services is not available.  This application will close.</string>

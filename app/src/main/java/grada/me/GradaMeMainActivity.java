@@ -1,7 +1,12 @@
 package grada.me;
 
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.DialogFragment;
+import android.app.PendingIntent;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -13,17 +18,15 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.plus.People;
 import com.google.android.gms.plus.Plus;
-import com.google.android.gms.plus.model.people.Person;
-import com.google.android.gms.plus.model.people.PersonBuffer;
 
 import java.util.ArrayList;
 
+import grada.me.dialogs.ApplicationDialogFragment;
+import grada.me.dialogs.enums.DialogType;
 import libraries.GooglePlus.Enums.GooglePlusStates;
 import libraries.GooglePlus.GooglePlusHelper;
 
@@ -68,13 +71,13 @@ public class GradaMeMainActivity extends Activity implements
 
         googlePlusHelper = new GooglePlusHelper(this);
 
-        mGoogleApiClient = googlePlusHelper.buildGoogleApiClient();
+        // mGoogleApiClient = googlePlusHelper.buildGoogleApiClient();
 
         Activity activity = this;
 
-        mGoogleApiClient = new GoogleApiClient.Builder(activity)
-                .addConnectionCallbacks(activity)
-                .addOnConnectionFailedListener(activity)
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
                 .addApi(Plus.API, Plus.PlusOptions.builder().build())
                 .addScope(Plus.SCOPE_PLUS_LOGIN)
                 .build();
@@ -166,12 +169,68 @@ public class GradaMeMainActivity extends Activity implements
 
         // Get view identifier.
         Integer identifierId = view.getId();
+        
+        // Google Play Click Listeners
+        googlePlusApiClient.initializeClickListeners(identifierId);
     }
+
+    /**
+     * A fragment that displays a dialog window, floating on top of its activity's window.
+     * This fragment contains a Dialog object, which it displays as appropriate based on the fragment's state.
+     * Control of the dialog (deciding when to show, hide, dismiss it) should be done through the API here, not with direct calls on the dialog.
+     */
+    public static class ActivityDialogFragment extends ApplicationDialogFragment {
+        Activity activity;
+        int title;
+        DialogType type;
+        GooglePlusApiClient googlePlusApiClient;
+        
+        public static ActivityDialogFragment newInstance(Activity activity, int title, DialogType dialogType) {
+            ActivityDialogFragment fragment = new ActivityDialogFragment();
+            Bundle arguments = new Bundle();
+        
+            
+            return fragment;
+        }
+        
+        @Override
+        public Dialog onCrete(Bundle savedInstanceState) {
+
+            // Load a new Google Play Services Error Dialog
+            if (this.type == DialogType.DIALOG_PLAY_SERVICES_ERROR) {
+                Dialog googlePlayErrorDialog = googlePlusApiClient.createGooglePlayServicesErrorDialog(this.activity);
+                
+                if (googlePlayErrorDialog != null) {
+                    return googlePlayErrorDialog;
+                } else {
+                    Dialog defaultAlertDialog = this.createDefaultApplicationError();
+
+                    return defaultAlertDialog;
+                }
+            } else {
+                Dialog defaultAlertDialog = this.createDefaultApplicationError();
+
+                return defaultAlertDialog;
+            }
+        }
+
+    } // END ApplicationDialogFragment
 
     /**
      * Operation with all Google Plus iterations.
      */
-    public class GooglePlusApiClient {
+    private class GooglePlusApiClient {
+
+        // Used to store the PendingIntent most recently returned by Google Play
+        // services until the user clicks 'sign in'.
+        private PendingIntent mSignInIntent;
+
+        // Used to store the error code most recently returned by Google Play services
+        // until the user clicks 'sign in'.
+        private int mSignInError;
+        
+        // The requestCode given when calling startActivityForResult.
+        private static final int REQUEST_CODE = 0;
 
         /**
          * onConnected is called when our Activity successfully connects to Google
@@ -243,5 +302,107 @@ public class GradaMeMainActivity extends Activity implements
                 mGoogleApiClient.connect();
             }
         }
-    }
+
+        /**
+         * Initialize logic behind Google Plus Click Listeners
+         * @param identifierId
+         */
+        private void initializeClickListeners(Integer identifierId) {
+            // We only process button clicks when GoogleApiClient is not transitioning
+            // between connected and not connected.
+            if (!mGoogleApiClient.isConnected()) {
+                switch (identifierId) {
+                    // User try to sign in
+                    case R.id.sign_in_button:
+                        mStatus.setText(R.string.status_signing_in);
+                        resolveSignInError();
+                        break;
+                    case R.id.sign_out_button:
+                        // We clear the default account on sign out so that Google Play
+                        // services will not return an onConnected callback without user
+                        // interaction.
+                        Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
+                        mGoogleApiClient.disconnect();
+                        mGoogleApiClient.connect();
+                        break;
+                }
+            }
+        }
+
+        /* Starts an appropriate intent or dialog for user interaction to resolve
+         * the current error preventing the user from being signed in.  This could
+         * be a dialog allowing the user to select an account, an activity allowing
+         * the user to consent to the permissions being requested by your app, a
+         * setting to enable device networking, etc.
+         */
+        private void resolveSignInError() {
+            if (mSignInIntent != null) {
+                // We have an intent which will allow our user to sign in or
+                // resolve an error.  For example if the user needs to
+                // select an account to sign in with, or if they need to consent
+                // to the permissions your app is requesting.
+                
+                try {
+                    // Send the pending intent that we stored on the most recent
+                    // OnConnectionFailed callback.  This will allow the user to
+                    // resolve the error currently preventing our connection to
+                    // Google Play services.
+                    googlePlusHelper.status = GooglePlusStates.STATE_IN_PROGRESS;
+                    startIntentSenderForResult(mSignInIntent.getIntentSender(), RC_SIGN_IN, null, 0, 0, 0);
+                    
+                } catch (IntentSender.SendIntentException sendIntentException) {
+                    Log.e(TAG, "Sign in intent could not be sent: ", sendIntentException);
+
+                    // The intent was canceled before it was sent.  Attempt to connect to
+                    // get an updated ConnectionResult.
+                    googlePlusHelper.status = GooglePlusStates.STATE_SIGN_IN;
+                    mGoogleApiClient.connect();
+                }
+            } else {
+
+            }
+        }
+
+        /**
+         * Start if Google Play Services Error Dialog if you have any error
+         * @param activity
+         * @return
+         */
+        private Dialog createGooglePlayServicesErrorDialog(Activity activity) {
+            if (GooglePlayServicesUtil.isUserRecoverableError(mSignInError)) {
+                /**
+                 * Class GooglePlayServicesUtil:
+                 * Utility class for verifying that the Google Play services APK is available and up-to-date on this device.
+                 * http://developer.android.com/reference/com/google/android/gms/common/GooglePlayServicesUtil.html
+                 *
+                 * Method public static Dialog getErrorDialog (int errorCode, Activity activity, int requestCode, DialogInterface.OnCancelListener cancelListener)
+                 * Returns a dialog to address the provided errorCode. 
+                 * * The returned dialog displays a localized message about the error and upon user confirmation 
+                 * * (by tapping on dialog) will direct them to the Play Store if Google Play services is out of date or missing, 
+                 * * or to system settings if Google Play services is disabled on the device.
+                 */
+                Dialog googlePlayErrorDialog = GooglePlayServicesUtil.getErrorDialog(
+                        // errorCode - error code returned by isGooglePlayServicesAvailable(Context) call. If errorCode is SUCCESS then null is returned.
+                        mSignInError,
+                        // activity - parent activity for creating the dialog, also used for identifying language to display dialog in.
+                        activity,
+                        // requestCode - The requestCode given when calling startActivityForResult.
+                        REQUEST_CODE,
+                        // cancelListener - the DialogInterface.OnCancelListener to invoke if the dialog is canceled.
+                        new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                                Log.e(TAG, "Google Play services resolution cancelled");
+                                googlePlusHelper.status = GooglePlusStates.STATE_DEFAULT;
+                                mStatus.setText(R.string.status_signed_out);
+                            }
+                        }
+                );
+
+                return googlePlayErrorDialog;
+            } else {
+                return null;
+            }
+        }
+    } // END GooglePlusApiClient
 }

@@ -18,6 +18,8 @@ keytool -list -v -keystore  ~/.android/debug.keystore
 
 ### Android studio gradle configuration
 
+- Migrating Gradle Projects to version 1.0.0 (http://tools.android.com/tech-docs/new-build-system/migrating-to-1-0-0)
+
 Please replace:
 ```
 dependencies {
