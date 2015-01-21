@@ -14,7 +14,10 @@ Documentation:
 ### Generation of SHA1 key
 
 http://stackoverflow.com/questions/19207940/how-to-get-my-android-fingerprint-certifica-in-android-studio
+
+```bash
 keytool -list -v -keystore  ~/.android/debug.keystore
+```
 
 ### Android studio gradle configuration
 
