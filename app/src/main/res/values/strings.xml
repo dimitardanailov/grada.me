@@ -3,6 +3,9 @@
 
     <string name="app_name">Grada.me</string>
     <string name="action_settings">Settings</string>
+    
+    <!-- Basic -->
+    <string name="cancel">Cancel</string>
 
     <string name="circles_title">Visible circles:</string>
     <string name="sign_out_button_name">Sign out</string>
@@ -30,4 +33,9 @@
     <string name="close">Close</string>
     <string name="profile_picture">User\'s profile picture.</string>
 
+    <!-- GPS Alert Dialog -->
+    <string name="GPS_alert_dialog_title">GPS is setting</string>
+    <string name="GPS_alert_dialog_message">GPS is not enabled. Do you want to go to setting menu</string>
+    <!-- GPS Alert Dialog -->
+    
 </resources>

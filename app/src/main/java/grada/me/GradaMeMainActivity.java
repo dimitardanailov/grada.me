@@ -3,6 +3,7 @@ package grada.me;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.app.FragmentTransaction;
 import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -21,18 +22,28 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.MapFragment;
+
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.plus.Plus;
 
 import java.util.ArrayList;
 
 import grada.me.dialogs.ApplicationDialogFragment;
 import grada.me.dialogs.enums.DialogType;
+import grada.me.googlemaps.ApplicationMapFragment;
 import libraries.GooglePlus.Enums.GooglePlusStates;
 import libraries.GooglePlus.GooglePlusHelper;
 
-public class GradaMeMainActivity extends Activity implements
+public class GradaMeMainActivity extends DefaultActivity implements
     GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener,
+    OnMapReadyCallback,
     View.OnClickListener {
 
     // Get Class Name
@@ -45,7 +56,6 @@ public class GradaMeMainActivity extends Activity implements
      * GoogleApiClient wraps our service connection to Google Play services and
      * provides access to the users sign in state and Google's APIs.
      */
-
     private GoogleApiClient mGoogleApiClient;
 
     // Layout Elements
@@ -58,10 +68,13 @@ public class GradaMeMainActivity extends Activity implements
     private ArrayList<String> mCirclesList;
 
     // Class References and Internal Libraries
-    // Google Plus
     private GooglePlusApiClient googlePlusApiClient = new GooglePlusApiClient();
+    
+    // Google Plus Helper
     private GooglePlusHelper googlePlusHelper;
 
+    private GoogleMapClient googleMapClient;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +94,14 @@ public class GradaMeMainActivity extends Activity implements
                 .addApi(Plus.API, Plus.PlusOptions.builder().build())
                 .addScope(Plus.SCOPE_PLUS_LOGIN)
                 .build();
+        
+        // Try to load a new Google Map
+        try {
+            googleMapClient = new GoogleMapClient(this);
+            googleMapClient.initializeMapFragment();
+        } catch (Exception e) {
+            Log.e(TAG, "Google Maps can't be loaded", e);
+        }
     }
 
 
@@ -109,6 +130,12 @@ public class GradaMeMainActivity extends Activity implements
     @Override
     public void onClick(View view) {
         initializeClickListeners(view);
+    }
+
+    @Override
+    public void onMapReady(GoogleMap map) {
+        // Load Configurations and Setup for our Google Map.
+        googleMapClient.onMapReady(map);
     }
 
     @Override
@@ -183,13 +210,34 @@ public class GradaMeMainActivity extends Activity implements
         Activity activity;
         int title;
         DialogType type;
-        GooglePlusApiClient googlePlusApiClient;
-        
+        GooglePlusApiClient googlePlusApiClient = null;
+
+        /**
+         * Create Activity Dialog Fragment
+         * @param activity
+         * @param title
+         * @param dialogType
+         */
+        public ActivityDialogFragment(Activity activity, int title, DialogType dialogType) {
+            super(activity, title, dialogType);
+        }
+
+        /**
+         * Set googlePlusApiClient for current instance
+         * @param googlePlusApiClient
+         */
+        public void setGooglePlusApiClient(GooglePlusApiClient googlePlusApiClient) {
+            this.googlePlusApiClient = googlePlusApiClient;
+        }
+
         public static ActivityDialogFragment newInstance(Activity activity, int title, DialogType dialogType) {
-            ActivityDialogFragment fragment = new ActivityDialogFragment();
-            Bundle arguments = new Bundle();
-        
+            ActivityDialogFragment fragment = new ActivityDialogFragment(activity, title, dialogType);
             
+            // A mapping from String values to various Parcelable types.
+            Bundle arguments = new Bundle();
+            arguments.putInt("title", title);
+            fragment.setArguments(arguments);
+
             return fragment;
         }
         
@@ -198,7 +246,13 @@ public class GradaMeMainActivity extends Activity implements
 
             // Load a new Google Play Services Error Dialog
             if (this.type == DialogType.DIALOG_PLAY_SERVICES_ERROR) {
-                Dialog googlePlayErrorDialog = googlePlusApiClient.createGooglePlayServicesErrorDialog(this.activity);
+
+                Dialog googlePlayErrorDialog = null;
+                
+                // Try to display
+                if (googlePlusApiClient != null) {
+                    googlePlayErrorDialog = googlePlusApiClient.createGooglePlayServicesErrorDialog(this.activity);
+                }
                 
                 if (googlePlayErrorDialog != null) {
                     return googlePlayErrorDialog;
@@ -366,7 +420,7 @@ public class GradaMeMainActivity extends Activity implements
         /**
          * Start if Google Play Services Error Dialog if you have any error
          * @param activity
-         * @return
+         * @return if you
          */
         private Dialog createGooglePlayServicesErrorDialog(Activity activity) {
             if (GooglePlayServicesUtil.isUserRecoverableError(mSignInError)) {
@@ -405,4 +459,122 @@ public class GradaMeMainActivity extends Activity implements
             }
         }
     } // END GooglePlusApiClient
+
+    /**
+     * Inner class to operate with all Google Maps iterations.
+     */
+    private class GoogleMapClient {
+
+        // Instance to current activity
+        private Activity activity;
+
+        // Create a new Map fragment
+        private ApplicationMapFragment mapFragment;
+
+        // Instance of our Google Map
+        private GoogleMap googleMap;
+        
+        // Google Map Fragment Name
+        private static final String MAP_FRAGMENT_TAG = "google_maps_fragment";
+
+        // Google Map Zoom default zoom level
+        private static final int DEFAULT_ZOOM_LEVEL = 2;
+
+        /**
+         * User should to have large zoom value to get values from server.
+         * User will get information after zoom level >= {MINIMUM_ZOOM_LEVEL_SERVER_REQUEST}
+         */
+        private static final int MINIMUM_ZOOM_LEVEL_SERVER_REQUEST = 7;
+
+        // Initialize to a non-valid zoom value
+        private float previousZoomLevel = -1.0f;
+
+        public GoogleMapClient(Activity activity) {
+            this.activity = activity;
+        }
+        
+        /**
+         * Initialize a new Map Fragment, if you have map fragment call
+         */
+        protected void initializeMapFragment() {
+            
+            if (this.activity != null) {
+                // Try to get Map Fragment
+                mapFragment = (ApplicationMapFragment) getFragmentManager()
+                        .findFragmentByTag(MAP_FRAGMENT_TAG);
+
+                // We only create a fragment if it doesn't already exist.
+                if (mapFragment == null) {
+                    mapFragment = new ApplicationMapFragment(this.activity);
+                    mapFragment.initializeGoogleMapsOptions();
+
+                    // This activity will receive the Map object once the map fragment
+                    // is fully loaded
+                    mapFragment.getMapAsync((OnMapReadyCallback) this.activity);
+
+                    //mapFragment.initializeFragmentTransaction();
+                    // Then we add it using a FragmentTransaction.
+                    FragmentTransaction fragmentTransaction = getFragmentManager()
+                            .beginTransaction();
+                    fragmentTransaction.add(R.id.google_map_container, mapFragment,
+                            MAP_FRAGMENT_TAG);
+                    fragmentTransaction.commit();
+
+                } else {
+                    // This activity will receive the Map object once the map fragment
+                    // is fully loaded
+                    mapFragment.getMapAsync((OnMapReadyCallback) this.activity);
+                }
+            }
+        }
+        
+        protected void onMapReady(GoogleMap map) {
+            Log.d(TAG, "Google Map is loaded");
+            
+            // Previous Zoom level will be equal to our Default Zoom Level
+            previousZoomLevel = DEFAULT_ZOOM_LEVEL;
+
+            // googleMap our application will use to store all information
+            googleMap = map;
+
+            // Move Google Map Camera to Default Zoom Level
+            googleMap.moveCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM_LEVEL));
+
+            // The My Location button will be visible on the top right of the map.
+            googleMap.setMyLocationEnabled(true);
+
+            // Disable Zoom UI Controls
+            googleMap.getUiSettings().setZoomControlsEnabled(false);
+
+            /*** Listeners ***/
+            
+            // Add Listener, when user change camera
+            // googleMap.setOnCameraChangeListener(getCameraChangeListener());
+
+            /*** Listeners ***/
+        }
+
+        /**
+         * Attach listener when user change camera position (drag or zoom/zoom out)
+         *
+         * Android Documentation for GoogleMap.OnCameraChangeListener: Called after
+         * the camera position has changed. During an animation, this listener may
+         * not be notified of intermediate camera positions. It is always called for
+         * the final position in the animation.
+         *
+         * Source: http://stackoverflow.com/questions/13973886/zoom-level-listener-in-
+         * google-maps-v2-in-android
+         *  
+         * @return OnCameraChangeListener
+         */
+        private GoogleMap.OnCameraChangeListener getCameraChangeListener() {
+            return new OnCameraChangeListener() {
+                @Override
+                public void onCameraChange(CameraPosition position) {
+                    Log.d(TAG, "Zoom: " + position.zoom);
+                }
+            };
+        }
+
+    } // END GoogleMapClient
 }

@@ -42,6 +42,10 @@ public class ApplicationDialogFragment extends DialogFragment {
         return this.createDefaultApplicationError();
     }
 
+    /**
+     * Method will return Alert Dialog to display something is wrong with our application
+     * @return Dialog
+     */
     public Dialog createDefaultApplicationError() {
         int title = R.string.default_alert_dialog_title;
 
