@@ -70,8 +70,7 @@ You must also request the following permissions to use the noted features:
 Documentation:
 
 - http://developer.android.com/google/play-services/setup.html
-- https://developers.google.com/maps/documentation/android/start#install_and_configure_the_google_play_services_sdk
-- 
+- https://developers.google.com/maps/documentation/android/start
 
 ### Android Manifest
 
