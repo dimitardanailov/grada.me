@@ -94,7 +94,7 @@ keytool -list -v -keystore  ~/.android/debug.keystore
 ```xml
 <!--
     Goolge Maps API Key
-    Developer Key : AIzaSyDYis6tum992JGN-T6lc6HGFB_zEGSiiWY
+    Developer Key : {Key}
 -->
 <meta-data
     android:name="com.google.android.maps.v2.API_KEY"
@@ -127,11 +127,6 @@ You must also request the following permissions to use the noted features:
 ```xml
 <!-- Allows the Google Maps API to use the Global Positioning System (GPS) to determine the device's location to within a very small area. -->
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-```
-
-```xml
-<!-- Allows an application to initiate a phone call without going through the Dialer user interface for the user to confirm the call being placed. -->
-<uses-permission android:name="android.permission.CALL_PHONE"></uses-permission>
 ```
 
 Specify requirement for OpenGL ES version 2

@@ -492,7 +492,7 @@ public class GradaMeMainActivity extends DefaultActivity implements
         public GoogleMapClient(Activity activity) {
             this.activity = activity;
         }
-        
+
         /**
          * Initialize a new Map Fragment, if you have map fragment call
          */
@@ -519,6 +519,7 @@ public class GradaMeMainActivity extends DefaultActivity implements
                     fragmentTransaction.add(R.id.google_map_container, mapFragment,
                             MAP_FRAGMENT_TAG);
                     fragmentTransaction.commit();
+
 
                 } else {
                     // This activity will receive the Map object once the map fragment
