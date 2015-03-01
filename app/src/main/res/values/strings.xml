@@ -38,4 +38,7 @@
     <string name="GPS_alert_dialog_message">GPS is not enabled. Do you want to go to setting menu</string>
     <!-- GPS Alert Dialog -->
     
+    <!-- Facebook Settings -->
+    <string name="facebook_app_id">500504260088981</string>
+    
 </resources>

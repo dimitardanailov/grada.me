@@ -19,14 +19,6 @@ http://stackoverflow.com/questions/19207940/how-to-get-my-android-fingerprint-ce
 keytool -list -v -keystore  ~/.android/debug.keystore
 ```
 
-## Facebook SDK
-
-```bash
-dependencies {
-    compile 'com.facebook.android:facebook-android-sdk:[facebook-sdk-version]'
-}
-```
-
 ### Android studio gradle configuration
 
 - Migrating Gradle Projects to version 1.0.0 (http://tools.android.com/tech-docs/new-build-system/migrating-to-1-0-0)
@@ -82,6 +74,16 @@ Documentation:
 
 - http://developer.android.com/google/play-services/setup.html
 - https://developers.google.com/maps/documentation/android/start
+
+### Android studio gradle configuration
+
+```
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v{#versionNumber}'
+    compile 'com.google.android.gms:play-services-maps:{#versionNumber}'
+}
+```
 
 ### Android Manifest
 
@@ -151,12 +153,78 @@ We recommend that you add the following <uses-feature> element as a child of the
     android:required="true" />
 ```
 
-```
+## Facebook SDK
+
+### Android studio gradle configuration
+
+```bash
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v{#versionNumber}'
-    compile 'com.google.android.gms:play-services-maps:{#versionNumber}'
+    compile 'com.facebook.android:facebook-android-sdk:[facebook-sdk-version]'
 }
+```
+
+#### Prerequisites
+
+Before you implement Facebook Login you need:
+
+- Facebook App - Configured and linked to your app, with Single Sign On enabled.
+
+After that add this Facebook App Id in Android Manifest configuration:
+
+```xml
+<!-- Facebook APP ID -->
+<meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>
+```
+
+### Add Facebook Login
+
+Documentation: https://developers.facebook.com/docs/facebook-login/android/v2.2
+
+#### Create Facebook Fragment
+
+Create a new layout xml and place facebook button. Example `facebook_login_button_fragment`:
+
+```xml
+
+    <com.facebook.widget.LoginButton
+        android:id="@+id/authButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="30dp"
+        />
+```
+
+Create Facebook Fragment Class. Example `FacebookLoginButtonFragment` class
+
+```java
+    
+    import android.support.v4.app.Fragment;
+
+    public class FacebookLoginButtonFragment extends Fragment {
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+            // Get Layout Information and inflate view
+            View view = inflater.inflate(R.layout.facebook_login_button_fragment, container, false);
+
+            return view;
+        }
+    }
+```
+
+Next, define a private instance variable for your `MainFragment` class:
+
+```java
+private FacebookLoginButtonFragment FacebookLoginButtonFragment;
+```
+
+Change `onCreate()` to add an instance of the `FacebookLoginButtonFragment` class to the activity 
+during your app's initial setup or after the saved state restores:
+
+```java
+
 ```
 
 ### MacOSX Emulators

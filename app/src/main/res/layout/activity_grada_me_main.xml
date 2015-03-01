@@ -61,13 +61,20 @@
             android:padding="0dip" />
 
     </RelativeLayout>
+    
+    <RelativeLayout
+        android:id="@+id/facebook_wrapper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/additional_information">
+    </RelativeLayout>
 
     <!-- Google Map Container -->
     <RelativeLayout
         android:id="@+id/google_map_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/additional_information"/>
+        android:layout_below="@+id/facebook_wrapper"/>
     <!-- Google Map Container -->
 
 </RelativeLayout>

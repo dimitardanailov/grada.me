@@ -36,6 +36,7 @@ import java.util.ArrayList;
 
 import grada.me.dialogs.ApplicationDialogFragment;
 import grada.me.dialogs.enums.DialogType;
+import grada.me.facebook.FacebookLoginButtonFragment;
 import grada.me.googlemaps.ApplicationMapFragment;
 import libraries.GooglePlus.Enums.GooglePlusStates;
 import libraries.GooglePlus.GooglePlusHelper;
@@ -74,12 +75,36 @@ public class GradaMeMainActivity extends DefaultActivity implements
     private GooglePlusHelper googlePlusHelper;
 
     private GoogleMapClient googleMapClient;
+
+    /**
+     * To set up the button in your UI, create a new class named {Fragment Class Name}
+     * that's a subclass of the Fragment class.
+     */
+    private FacebookLoginButtonFragment facebookLoginButtonFragment;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Set Activity Layout
         setContentView(R.layout.activity_grada_me_main);
 
+        if (savedInstanceState == null) {
+            // Add the fragment on initial activity setup
+            
+            // Initialize a new Facebook Login Button Fragment
+            facebookLoginButtonFragment = new FacebookLoginButtonFragment();
+            
+            getSupportFragmentManager()
+                .beginTransaction()
+                .add(R.id.facebook_wrapper, facebookLoginButtonFragment)
+                .commit();
+        } else {
+            // Or set the fragment from restored state info
+            facebookLoginButtonFragment = (FacebookLoginButtonFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.facebook_wrapper);
+        }
+        
         initializeLayoutElements();
 
         googlePlusHelper = new GooglePlusHelper(this);
