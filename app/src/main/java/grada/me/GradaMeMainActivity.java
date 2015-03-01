@@ -94,11 +94,13 @@ public class GradaMeMainActivity extends DefaultActivity implements
                 .addApi(Plus.API, Plus.PlusOptions.builder().build())
                 .addScope(Plus.SCOPE_PLUS_LOGIN)
                 .build();
+
+        Log.d(TAG, "App is started ... ");
         
         // Try to load a new Google Map
         try {
-            googleMapClient = new GoogleMapClient(this);
-            googleMapClient.initializeMapFragment();
+            // googleMapClient = new GoogleMapClient(this);
+            // googleMapClient.initializeMapFragment();
         } catch (Exception e) {
             Log.e(TAG, "Google Maps can't be loaded", e);
         }
@@ -138,15 +140,6 @@ public class GradaMeMainActivity extends DefaultActivity implements
         googleMapClient.onMapReady(map);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case RC_SIGN_IN:
-                googlePlusApiClient.OnActivityResult(requestCode, resultCode, data);
-                break;
-        }
-    }
-
     /**
      * Google Play services establish connection
      * @param connectionHint
@@ -171,6 +164,23 @@ public class GradaMeMainActivity extends DefaultActivity implements
         mGoogleApiClient.connect();
     }
 
+    /**
+     * Called when an activity you launched exits, giving you the requestCode you started it with, the resultCode it returned, 
+     * * and any additional data from it. The resultCode will be RESULT_CANCELED if the activity explicitly returned that, 
+     * * didn't return any result, or crashed during its operation.
+     * @param requestCode The integer request code originally supplied to startActivityForResult(), allowing you to identify who this result came from.
+     * @param resultCode The integer result code returned by the child activity through its setResult().
+     * @param data An Intent, which can return result data to the caller (various data can be attached to Intent "extras").
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case RC_SIGN_IN:
+                googlePlusApiClient.OnActivityResult(requestCode, resultCode, data);
+                break;
+        }
+    }
+    
     @Override
     protected void onStart() {
         super.onStart();
@@ -192,6 +202,10 @@ public class GradaMeMainActivity extends DefaultActivity implements
         mRevokeButton.setOnClickListener(this);
     }
 
+    /**
+     * Initialize application click listeners
+     * @param view
+     */
     private void initializeClickListeners(View view) {
 
         // Get view identifier.

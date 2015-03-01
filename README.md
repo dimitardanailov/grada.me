@@ -19,6 +19,14 @@ http://stackoverflow.com/questions/19207940/how-to-get-my-android-fingerprint-ce
 keytool -list -v -keystore  ~/.android/debug.keystore
 ```
 
+## Facebook SDK
+
+```bash
+dependencies {
+    compile 'com.facebook.android:facebook-android-sdk:[facebook-sdk-version]'
+}
+```
+
 ### Android studio gradle configuration
 
 - Migrating Gradle Projects to version 1.0.0 (http://tools.android.com/tech-docs/new-build-system/migrating-to-1-0-0)
