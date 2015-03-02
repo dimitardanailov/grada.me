@@ -225,6 +225,21 @@ during your app's initial setup or after the saved state restores:
 
 ```java
 
+if (savedInstanceState == null) {
+    // Add the fragment on initial activity setup
+
+    // Initialize a new Facebook Login Button Fragment
+    facebookLoginButtonFragment = new FacebookLoginButtonFragment();
+
+    getSupportFragmentManager()
+        .beginTransaction()
+        .add(R.id.facebook_wrapper, facebookLoginButtonFragment)
+        .commit();
+} else {
+    // Or set the fragment from restored state info
+    facebookLoginButtonFragment = (FacebookLoginButtonFragment) getSupportFragmentManager()
+            .findFragmentById(R.id.facebook_wrapper);
+}
 ```
 
 ### MacOSX Emulators
