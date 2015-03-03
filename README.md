@@ -155,6 +155,9 @@ We recommend that you add the following <uses-feature> element as a child of the
 
 ## Facebook SDK
 
+https://developers.facebook.com/docs/facebook-login/android/v2.2
+
+
 ### Android studio gradle configuration
 
 ```bash

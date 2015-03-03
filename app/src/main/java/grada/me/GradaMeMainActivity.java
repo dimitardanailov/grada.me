@@ -124,8 +124,8 @@ public class GradaMeMainActivity extends DefaultActivity implements
         
         // Try to load a new Google Map
         try {
-            // googleMapClient = new GoogleMapClient(this);
-            // googleMapClient.initializeMapFragment();
+            googleMapClient = new GoogleMapClient(this);
+            googleMapClient.initializeMapFragment();
         } catch (Exception e) {
             Log.e(TAG, "Google Maps can't be loaded", e);
         }
