@@ -119,7 +119,7 @@ public class GradaMeMainActivity extends DefaultActivity implements
                 .addApi(Plus.API, Plus.PlusOptions.builder().build())
                 .addScope(Plus.SCOPE_PLUS_LOGIN)
                 .build();
-
+    
         Log.d(TAG, "App is started ... ");
         
         // Try to load a new Google Map
